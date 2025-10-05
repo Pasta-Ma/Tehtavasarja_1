@@ -62,8 +62,9 @@ form.addEventListener('submit', async (e) => {
 // 3) Laskuri — virhe: event delegation ja bubbling sekoilee
 const counterBtn = $('.counter');
 counterBtn.addEventListener('click', (e) => {
-    if (e.target.classList.contains('count')) return; // BUG: estää klikin
-    const span = $('.count', counterBtn);
+    const btn = e.target.closest('.counter');
+    if (!btn) return;
+    const span = btn.querySelector('span');
     span.textContent = String(parseInt(span.textContent, 10) + 1);
 });
 
