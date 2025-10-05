@@ -43,6 +43,12 @@ async function searchImages(query) {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = $('#q').value.trim();
+
+    // Päivitä URL hakusanan perusteella
+    const url = new URL(location.href);
+    url.searchParams.set('q', q);
+    history.pushState({ q }, '', url);
+
     statusEl.textContent = 'Ladataan…';
     resultsEl.innerHTML = '';
     try {
