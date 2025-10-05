@@ -6,7 +6,7 @@ let controller; // AbortController instanssi
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-// 1) Teema — virhe: localStorage avain sekoilee, event listener duplikoituu
+// 1) Teema — virhe: localStorage avain sekoilee, event listener duplikoituu - korjattu
 const themeBtn = $('#themeToggle');
 const THEME_KEY = 'theme-preference';
 function applyTheme(t) { document.documentElement.setAttribute('data-theme', t); }
@@ -14,7 +14,7 @@ function saveTheme(t) { localStorage.setItem('theme-preference', t); } // BUG: k
 function loadTheme() { return localStorage.getItem('theme-preference') || 'light'; }
 function toggleTheme() { const next = (loadTheme() === 'light') ? 'dark' : 'light'; applyTheme(next); saveTheme(next); }
 
-// BUG: tuplalistener
+// BUG: tuplalistener - korjattu
 themeBtn.addEventListener('click', () => toggleTheme());
 //themeBtn.addEventListener('click', () => toggleTheme()); // Extra listener - poistettu
 applyTheme(loadTheme());
@@ -24,7 +24,7 @@ const form = document.getElementById('searchForm');
 const resultsEl = document.getElementById('results');
 const statusEl = document.getElementById('status');
 
-// Coffee http-rajapinnan dokumentaatio: https://sampleapis.com/api-list/coffee
+// Coffee http-rajapinnan dokumentaatio: https://sampleapis.com/api-list/coffee - korjattu
 async function searchImages(query) {
     if (controller) controller.abort(); // Keskeytä edellinen pyyntö
     controller = new AbortController(); // Luo uusi AbortController
@@ -59,7 +59,7 @@ form.addEventListener('submit', async (e) => {
     }
 });
 
-// 3) Laskuri — virhe: event delegation ja bubbling sekoilee
+// 3) Laskuri — virhe: event delegation ja bubbling sekoilee - korjattu
 const counterBtn = $('.counter');
 counterBtn.addEventListener('click', (e) => {
     const btn = e.target.closest('.counter');
@@ -68,20 +68,26 @@ counterBtn.addEventListener('click', (e) => {
     span.textContent = String(parseInt(span.textContent, 10) + 1);
 });
 
-// 4) Clipboard — virhe: ei permissioiden / https tarkistusta
+// 4) Clipboard — virhe: ei permissioiden / https tarkistusta - ei korjattu
 $('#copyBtn').addEventListener('click', async () => {
     const text = $('#copyBtn').dataset.text;
     await navigator.clipboard.writeText(text); // BUG: voi heittää virheen
     alert('Kopioitu!');
 });
 
-// 5) IntersectionObserver — virhe: threshold/cleanup puuttuu
+// 5) IntersectionObserver — virhe: threshold/cleanup puuttuu - korjattu
 const box = document.querySelector('.observe-box');
-const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.intersectionRatio > 0.25) {
-            box.textContent = 'Näkyvissä!';
-        }
-    });
-});
+
+const io = new IntersectionObserver((entries, observer) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && entry.intersectionRatio >= 0.25) {
+      box.textContent = 'Näkyvissä!';
+
+      
+      observer.unobserve(entry.target); // Pysäytä havainnointi
+      observer.disconnect(); // Irrota observer
+    }
+  });
+}, { threshold: 0.25 });
+
 io.observe(box);
