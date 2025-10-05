@@ -1,5 +1,7 @@
 'use strict';
 
+let controller; // AbortController instanssi
+
 // 0) Pieni apu
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -24,25 +26,37 @@ const statusEl = document.getElementById('status');
 
 // Coffee http-rajapinnan dokumentaatio: https://sampleapis.com/api-list/coffee
 async function searchImages(query) {
-    const url = `https://api.sampleapis.com/coffee/images`; // BUG: ei vastaa hakusanaan
-    const res = await fetch(url);
+    if (controller) controller.abort(); // Keskeytä edellinen pyyntö
+    controller = new AbortController(); // Luo uusi AbortController
+    const signal = controller.signal;
+    statusEl.textContent = 'Haetan...';
+    const url = `https://api.sampleapis.com/coffee/hot`;
+    const res = await fetch(url, { signal });
     const data = await res.json();
-    return data.slice(0, 8).map(x => ({ title: x.title || query, url: x.image }));
+    const filtered = data.filter(item => item.title.toLowerCase().includes(query.toLowerCase()));
+    if (filtered.length === 0) {
+        throw new Error('Ei kuvia tällä nimellä.');
+    }
+    return filtered.slice(0, 8).map(x => ({ title: x.title || query, url: x.image }));
 }
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = $('#q').value.trim();
     statusEl.textContent = 'Ladataan…';
-    const items = await searchImages(q); // BUG: ei try/catch, ks. https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/try...catch
     resultsEl.innerHTML = '';
-    items.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'card';
-        li.innerHTML = `<strong>${item.title}</strong><br><img alt="" width="160" height="120" src="${item.url}">`;
-        resultsEl.appendChild(li);
-    });
-    statusEl.textContent = `${items.length} tulosta`;
+    try {
+        const items = await searchImages(q);
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'card';
+            li.innerHTML = `<strong>${item.title}</strong><br><img alt="" width="160" height="120" src="${item.url}">`;
+            resultsEl.appendChild(li);
+        });
+        statusEl.textContent = `${items.length} tulosta`;
+    } catch (err) {
+        statusEl.textContent = err.message;
+    }
 });
 
 // 3) Laskuri — virhe: event delegation ja bubbling sekoilee
