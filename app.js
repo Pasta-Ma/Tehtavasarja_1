@@ -8,13 +8,13 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const themeBtn = $('#themeToggle');
 const THEME_KEY = 'theme-preference';
 function applyTheme(t) { document.documentElement.setAttribute('data-theme', t); }
-function saveTheme(t) { localStorage.setItem('them-preference', t); } // BUG: key typo
+function saveTheme(t) { localStorage.setItem('theme-preference', t); } // BUG: key typo - korjattu
 function loadTheme() { return localStorage.getItem('theme-preference') || 'light'; }
 function toggleTheme() { const next = (loadTheme() === 'light') ? 'dark' : 'light'; applyTheme(next); saveTheme(next); }
 
 // BUG: tuplalistener
 themeBtn.addEventListener('click', () => toggleTheme());
-themeBtn.addEventListener('click', () => toggleTheme());
+//themeBtn.addEventListener('click', () => toggleTheme()); // Extra listener - poistettu
 applyTheme(loadTheme());
 
 // 2) Haku — virhe: väärä API-osoite + virheenkäsittely puuttuu
